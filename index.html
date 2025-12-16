@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinsuGPT Status</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-main: #1a1a1a;
+            --text-sub: #666666;
+            --btn-color: #333333;
+            --bar-bg: #eeeeee;
+            --status-error: #ff4d4f;
+            --status-error-bg: #fff1f0;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--primary-bg);
+            font-family: -apple-system, sans-serif;
+        }
+
+        .card {
+            width: 380px;
+            height: 460px;
+            padding: 40px;
+            background: var(--card-bg);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 200; 
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .brand-status {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .view {
+            transition: opacity 0.4s ease;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hidden { display: none; opacity: 0; }
+
+        .message {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-sub);
+            word-break: keep-all;
+        }
+
+        .bottom-action { margin-top: auto; }
+
+        .btn-pill {
+            width: 100%;
+            padding: 16px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            background-color: var(--btn-color);
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-pill:active { transform: scale(0.98); }
+        .btn-close { background-color: #f0f0f0; color: #666; }
+
+        /* 로딩바 */
+        .loading-wrapper { margin-top: 40px; text-align: center; }
+        .progress-bar {
+            width: 100%; height: 8px;
+            background-color: var(--bar-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .progress-fill {
+            width: 0%; height: 100%;
+            background-color: var(--btn-color);
+            border-radius: 10px;
+            transition: width 0.3s ease-out;
+        }
+
+        /* 서버 리스트 및 에러 메시지 */
+        .status-list {
+            margin-top: 5px;
+            overflow-y: auto;
+            max-height: 220px;
+        }
+        
+        /* 에러 발생 시 스타일 */
+        .error-container {
+            text-align: center;
+            padding-top: 30px;
+        }
+        .error-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .error-text {
+            color: var(--status-error);
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .server-name { font-weight: 600; font-size: 13px; color: var(--text-main); }
+        
+        .status-badge {
+            width: 160px;
+            padding: 7px 0;
+            text-align: center;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-error { border: 1px solid var(--status-error); background: var(--status-error-bg); color: var(--status-error); }
+        .badge-normal { border: 1px solid #52c41a; background: #f6ffed; color: #52c41a; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="brand-container">
+            <div class="brand-title">MinsuGPT</div>
+            <div class="brand-status">status</div>
+        </div>
+
+        <div class="content-area">
+            <div id="view-main" class="view">
+                <div class="message">
+                    현재 시스템 점검이 진행 중입니다. 아래 버튼을 통해 실시간 서버 상태를 확인할 수 있습니다.
+                </div>
+                <div class="bottom-action">
+                    <button class="btn-pill" onclick="startLoading()">서버 상태 보기</button>
+                </div>
+            </div>
+
+            <div id="view-loading" class="view hidden">
+                <div class="loading-wrapper">
+                    <div class="progress-bar">
+                        <div id="loading-bar" class="progress-fill"></div>
+                    </div>
+                    <p id="loading-text" style="color: #888; font-size: 12px;">서버 응답을 기다리는 중...</p>
+                </div>
+            </div>
+
+            <div id="view-status" class="view hidden">
+                <div id="server-list" class="status-list">
+                    </div>
+                <div class="bottom-action">
+                    <button class="btn-pill btn-close" onclick="resetView()">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vMain = document.getElementById('view-main');
+        const vLoading = document.getElementById('view-loading');
+        const vStatus = document.getElementById('view-status');
+        const serverList = document.getElementById('server-list');
+        const loadingBar = document.getElementById('loading-bar');
+
+        function fadeSwap(outEl, inEl) {
+            outEl.style.opacity = '0';
+            setTimeout(() => {
+                outEl.classList.add('hidden');
+                inEl.classList.remove('hidden');
+                setTimeout(() => { inEl.style.opacity = '1'; }, 50);
+            }, 400);
+        }
+
+        // 서버 데이터를 가져오는 핵심 함수
+        async function fetchServerStatus() {
+            try {
+                const response = await fetch('config.json');
+                if (!response.ok) throw new Error('파일 없음'); // 404 등 에러 처리
+                
+                const data = await response.json();
+                renderServers(data.servers);
+            } catch (error) {
+                // 파일이 없거나 로드 실패 시 에러 화면 표시
+                serverList.innerHTML = `
+                    <div class="error-container">
+                        <div class="error-icon">⚠️</div>
+                        <div class="error-text">서버 상태를 불러오지 못했습니다.</div>
+                        <p style="font-size:12px; color:#999; margin-top:8px;">서버가 중지되었거나<br>연결이 올바르지 않습니다.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderServers(servers) {
+            serverList.innerHTML = '';
+            servers.forEach(srv => {
+                const row = document.createElement('div');
+                row.className = 'status-row';
+                let badgeClass = srv.type === 'normal' ? 'badge-normal' : 'badge-error';
+                row.innerHTML = `
+                    <span class="server-name">${srv.name}</span>
+                    <div class="status-badge ${badgeClass}">${srv.status} (${srv.reason})</div>
+                `;
+                serverList.appendChild(row);
+            });
+        }
+
+        function startLoading() {
+            let width = 0;
+            loadingBar.style.width = '0%';
+            fadeSwap(vMain, vLoading);
+
+            // 로딩 중에 데이터를 미리 가져오기 시작
+            fetchServerStatus();
+
+            const interval = setInterval(() => {
+                width += Math.floor(Math.random() * 15) + 2;
+                if (width >= 100) {
+                    width = 100;
+                    loadingBar.style.width = '100%';
+                    clearInterval(interval);
+                    setTimeout(() => { fadeSwap(vLoading, vStatus); }, 500);
+                } else {
+                    loadingBar.style.width = width + '%';
+                }
+            }, 150);
+        }
+
+        function resetView() {
+            fadeSwap(vStatus, vMain);
+        }
+    </script>
+</body>
+</html>
+

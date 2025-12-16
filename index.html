@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MinsuGPT Status</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,33 +20,55 @@
             --status-error-bg: #fff1f0;
         }
 
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased; /* 폰트 떨림 방지 */
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         body {
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: var(--primary-bg);
             font-family: -apple-system, sans-serif;
+            overflow: hidden;
         }
 
         .card {
-            width: 380px;
-            height: 460px;
+            width: 90%;
+            max-width: 380px;
+            height: 480px;
             padding: 40px;
             background: var(--card-bg);
             border-radius: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.06);
             display: flex;
             flex-direction: column;
-            box-sizing: border-box;
+            position: relative;
         }
 
+        /* 텍스트 떨림 방지를 위한 하드웨어 가속 레이아웃 */
         .brand-container {
             display: flex;
             align-items: baseline;
             gap: 8px;
-            margin-bottom: 25px;
+            position: absolute;
+            /* 초기 위치: 카드 중앙 */
+            top: 40px; 
+            left: 40px;
+            transform: translate(calc(190px - 50% - 40px), calc(240px - 50% - 40px));
+            transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+            white-space: nowrap;
+            will-change: transform; /* 애니메이션 최적화 */
+            z-index: 10;
+        }
+
+        /* 인트로 완료 후 제자리로 이동 */
+        .brand-container.ready {
+            transform: translate(0, 0);
         }
 
         .brand-title {
@@ -66,103 +88,38 @@
             letter-spacing: 1px;
         }
 
+        /* 본문 영역: 로고가 자리를 잡은 뒤 등장 */
         .content-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            position: relative;
+            margin-top: 65px; 
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none;
         }
 
-        .view {
-            transition: opacity 0.4s ease;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
+        .content-area.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
         }
 
+        /* 나머지 스타일 유지 */
+        .view { transition: opacity 0.4s ease; width: 100%; height: 100%; display: flex; flex-direction: column; }
         .hidden { display: none; opacity: 0; }
-
-        .message {
-            font-size: 14px;
-            line-height: 1.7;
-            color: var(--text-sub);
-            word-break: keep-all;
-        }
-
+        .message { font-size: 15px; line-height: 1.7; color: var(--text-sub); word-break: keep-all; }
         .bottom-action { margin-top: auto; }
-
-        .btn-pill {
-            width: 100%;
-            padding: 16px;
-            border-radius: 50px;
-            border: none;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            background-color: var(--btn-color);
-            color: white;
-            transition: all 0.2s;
-        }
-
-        .btn-pill:active { transform: scale(0.98); }
+        .btn-pill { width: 100%; padding: 16px; border-radius: 50px; border: none; cursor: pointer; font-size: 15px; font-weight: 600; background-color: var(--btn-color); color: white; transition: all 0.2s; }
+        .btn-pill:active { transform: scale(0.96); }
         .btn-close { background-color: #f0f0f0; color: #666; }
-
-        /* 로딩바 */
-        .loading-wrapper { margin-top: 40px; text-align: center; }
-        .progress-bar {
-            width: 100%; height: 8px;
-            background-color: var(--bar-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 15px;
-        }
-        .progress-fill {
-            width: 0%; height: 100%;
-            background-color: var(--btn-color);
-            border-radius: 10px;
-            transition: width 0.3s ease-out;
-        }
-
-        /* 서버 리스트 및 에러 메시지 */
-        .status-list {
-            margin-top: 5px;
-            overflow-y: auto;
-            max-height: 220px;
-        }
-        
-        /* 에러 발생 시 스타일 */
-        .error-container {
-            text-align: center;
-            padding-top: 30px;
-        }
-        .error-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-        .error-text {
-            color: var(--status-error);
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
+        .progress-bar { width: 100%; height: 6px; background-color: var(--bar-bg); border-radius: 10px; overflow: hidden; margin-top: 40px; margin-bottom: 15px; }
+        .progress-fill { width: 0%; height: 100%; background-color: var(--btn-color); transition: width 0.3s ease-out; }
+        .status-list { margin-top: 5px; overflow-y: auto; max-height: 240px; }
+        .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .server-name { font-weight: 600; font-size: 13px; color: var(--text-main); }
-        
-        .status-badge {
-            width: 160px;
-            padding: 7px 0;
-            text-align: center;
-            border-radius: 50px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
+        .status-badge { width: 150px; padding: 7px 0; text-align: center; border-radius: 50px; font-size: 11px; font-weight: 600; }
         .badge-error { border: 1px solid var(--status-error); background: var(--status-error-bg); color: var(--status-error); }
         .badge-normal { border: 1px solid #52c41a; background: #f6ffed; color: #52c41a; }
     </style>
@@ -170,15 +127,15 @@
 <body>
 
     <div class="card">
-        <div class="brand-container">
+        <div id="brand-box" class="brand-container">
             <div class="brand-title">MinsuGPT</div>
             <div class="brand-status">status</div>
         </div>
 
-        <div class="content-area">
+        <div id="content-area" class="content-area">
             <div id="view-main" class="view">
                 <div class="message">
-                    현재 시스템 점검이 진행 중입니다. 아래 버튼을 통해 실시간 서버 상태를 확인할 수 있습니다.
+                    현재 서버업데이트및 서버 점검이 진행 중입니다. 시간이 다소 소요될 수 있으며 최대 2일 소요됩니다. 실시간 상태를 확인하려면 아래 버튼을 눌러주세요.
                 </div>
                 <div class="bottom-action">
                     <button class="btn-pill" onclick="startLoading()">서버 상태 보기</button>
@@ -186,17 +143,14 @@
             </div>
 
             <div id="view-loading" class="view hidden">
-                <div class="loading-wrapper">
-                    <div class="progress-bar">
-                        <div id="loading-bar" class="progress-fill"></div>
-                    </div>
-                    <p id="loading-text" style="color: #888; font-size: 12px;">서버 응답을 기다리는 중...</p>
+                <div class="progress-bar">
+                    <div id="loading-bar" class="progress-fill"></div>
                 </div>
+                <p style="color: #888; font-size: 12px; text-align: center;">서버 노드 응답 대기 중...</p>
             </div>
 
             <div id="view-status" class="view hidden">
-                <div id="server-list" class="status-list">
-                    </div>
+                <div id="server-list" class="status-list"></div>
                 <div class="bottom-action">
                     <button class="btn-pill btn-close" onclick="resetView()">닫기</button>
                 </div>
@@ -205,11 +159,27 @@
     </div>
 
     <script>
+        const brandBox = document.getElementById('brand-box');
+        const contentArea = document.getElementById('content-area');
         const vMain = document.getElementById('view-main');
         const vLoading = document.getElementById('view-loading');
         const vStatus = document.getElementById('view-status');
         const serverList = document.getElementById('server-list');
         const loadingBar = document.getElementById('loading-bar');
+
+        // 1. 인트로 시퀀스 조절
+        window.addEventListener('load', () => {
+            // 0.5초 동안 중앙 대기
+            setTimeout(() => {
+                // 왼쪽 위로 이동 시작 (0.8초 소요)
+                brandBox.classList.add('ready');
+                
+                // 0.8초 이동이 완전히 끝난 뒤 내용 표시
+                setTimeout(() => {
+                    contentArea.classList.add('active');
+                }, 850); 
+            }, 500);
+        });
 
         function fadeSwap(outEl, inEl) {
             outEl.style.opacity = '0';
@@ -220,23 +190,14 @@
             }, 400);
         }
 
-        // 서버 데이터를 가져오는 핵심 함수
         async function fetchServerStatus() {
             try {
                 const response = await fetch('config.json');
-                if (!response.ok) throw new Error('파일 없음'); // 404 등 에러 처리
-                
+                if (!response.ok) throw new Error();
                 const data = await response.json();
                 renderServers(data.servers);
             } catch (error) {
-                // 파일이 없거나 로드 실패 시 에러 화면 표시
-                serverList.innerHTML = `
-                    <div class="error-container">
-                        <div class="error-icon">⚠️</div>
-                        <div class="error-text">서버 상태를 불러오지 못했습니다.</div>
-                        <p style="font-size:12px; color:#999; margin-top:8px;">서버가 중지되었거나<br>연결이 올바르지 않습니다.</p>
-                    </div>
-                `;
+                serverList.innerHTML = `<div style="text-align:center; padding-top:40px;"><div style="font-size:30px; margin-bottom:10px;">⚠️</div><div style="color:#ff4d4f; font-weight:600; font-size:14px;">데이터를 불러올 수 없습니다.</div></div>`;
             }
         }
 
@@ -246,10 +207,7 @@
                 const row = document.createElement('div');
                 row.className = 'status-row';
                 let badgeClass = srv.type === 'normal' ? 'badge-normal' : 'badge-error';
-                row.innerHTML = `
-                    <span class="server-name">${srv.name}</span>
-                    <div class="status-badge ${badgeClass}">${srv.status} (${srv.reason})</div>
-                `;
+                row.innerHTML = `<span class="server-name">${srv.name}</span><div class="status-badge ${badgeClass}">${srv.status} (${srv.reason})</div>`;
                 serverList.appendChild(row);
             });
         }
@@ -258,12 +216,9 @@
             let width = 0;
             loadingBar.style.width = '0%';
             fadeSwap(vMain, vLoading);
-
-            // 로딩 중에 데이터를 미리 가져오기 시작
             fetchServerStatus();
-
             const interval = setInterval(() => {
-                width += Math.floor(Math.random() * 15) + 2;
+                width += Math.floor(Math.random() * 20) + 2;
                 if (width >= 100) {
                     width = 100;
                     loadingBar.style.width = '100%';
@@ -272,7 +227,7 @@
                 } else {
                     loadingBar.style.width = width + '%';
                 }
-            }, 150);
+            }, 180);
         }
 
         function resetView() {

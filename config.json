@@ -1,0 +1,29 @@
+{
+  "servers": [
+    {
+      "name": "제 1 서버",
+      "status": "서버오류",
+      "reason": "OFFLINE",
+      "type": "error"
+    },
+    {
+      "name": "제 2 서버",
+      "status": "서버중지",
+      "reason": "MAINTENANCE",
+      "type": "stop"
+    },
+    {
+      "name": "제 3 서버 (Frontend)",
+      "status": "정상",
+      "reason": "STABLE",
+      "type": "normal"
+    },
+    {
+      "name": "데이터베이스",
+      "status": "기타",
+      "reason": "CHECKING",
+      "type": "etc"
+    }
+  ]
+}
+

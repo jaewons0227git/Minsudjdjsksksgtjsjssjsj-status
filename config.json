@@ -8,9 +8,9 @@
     },
     {
       "name": "제 2 서버",
-      "status": "서버중지",
-      "reason": "MAINTENANCE",
-      "type": "stop"
+      "status": "정상운영",
+      "reason": " ",
+      "type": "normal"
     },
     {
       "name": "제 3 서버 (Frontend)",

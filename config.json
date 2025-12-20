@@ -2,19 +2,19 @@
   "servers": [
     {
       "name": "제 1 서버",
-      "status": "서버오류",
-      "reason": "OFFLINE",
-      "type": "error"
+      "status": "정상운영",
+      "reason": "STABLE",
+      "type": "normal"
     },
     {
       "name": "제 2 서버",
-      "status": "서버중지",
-      "reason": " ",
-      "type": "error"
+      "status": "정상운영",
+      "reason": "STABLE",
+      "type": "normal"
     },
     {
       "name": "제 3 서버 (Frontend)",
-      "status": "정상",
+      "status": "정상운영",
       "reason": "STABLE",
       "type": "normal"
     },
